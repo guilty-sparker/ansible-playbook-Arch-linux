@@ -4,7 +4,7 @@
   become: true
   tasks:
 
-    # Install Zsh and Oh My Zsh
+   
     - name: Install Zsh
       pacman:
         name: zsh
@@ -34,7 +34,7 @@
         group: "{{ ansible_user_id }}"
         mode: '0644'
 
-    # Install Neovim and configure NvChad from local files
+   
     - name: Install Neovim
       pacman:
         name: neovim
@@ -54,7 +54,7 @@
       args:
         chdir: "{{ ansible_env.HOME }}/.config/nvim"
 
-    # Install Zsh prerequisites (autosuggestions, fastfetch, etc.)
+   
     - name: Copy Zsh autosuggestions from local directory
       copy:
         src: ./zsh-autosuggestions
@@ -69,14 +69,14 @@
         state: present
         update_cache: true
 
-    # Install Kitty terminal
+   
     - name: Install Kitty
       pacman:
         name: kitty
         state: present
         update_cache: true
 
-    # Install Miniconda
+   
     - name: Install Miniconda
       shell: |
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
@@ -85,21 +85,20 @@
       args:
         creates: "{{ ansible_env.HOME }}/miniconda"
 
-    # Install Jupyter Notebook
+   
     - name: Install Jupyter Notebook
       pacman:
         name: python-jupyterlab
         state: present
         update_cache: true
 
-    # Install Go
+   
     - name: Install Go
       pacman:
         name: go
         state: present
         update_cache: true
 
-    # Install Rust using rustup
     - name: Install Rust using rustup
       shell: |
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
