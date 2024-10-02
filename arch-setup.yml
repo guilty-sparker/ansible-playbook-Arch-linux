@@ -1,0 +1,108 @@
+---
+- name: Setup Development Environment on Arch Linux (with local dependencies)
+  hosts: localhost
+  become: true
+  tasks:
+
+    # Install Zsh and Oh My Zsh
+    - name: Install Zsh
+      pacman:
+        name: zsh
+        state: present
+        update_cache: true
+
+    - name: Set Zsh as default shell for current user
+      user:
+        name: "{{ ansible_user_id }}"
+        shell: /usr/bin/zsh
+      register: zsh_shell_changed
+
+    - name: Copy local Oh My Zsh setup
+      copy:
+        src: ./oh-my-zsh
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: '0755'
+      when: zsh_shell_changed is changed
+
+    - name: Copy .zshrc to home directory
+      copy:
+        src: ./zshrc
+        dest: "{{ ansible_env.HOME }}/.zshrc"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: '0644'
+
+    # Install Neovim and configure NvChad from local files
+    - name: Install Neovim
+      pacman:
+        name: neovim
+        state: present
+        update_cache: true
+
+    - name: Copy NvChad config to Neovim
+      copy:
+        src: ./nvim
+        dest: "{{ ansible_env.HOME }}/.config/nvim"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: '0755'
+
+    - name: Install NvChad dependencies
+      shell: nvim +PackerSync +qall
+      args:
+        chdir: "{{ ansible_env.HOME }}/.config/nvim"
+
+    # Install Zsh prerequisites (autosuggestions, fastfetch, etc.)
+    - name: Copy Zsh autosuggestions from local directory
+      copy:
+        src: ./zsh-autosuggestions
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: '0755'
+
+    - name: Install Fastfetch
+      pacman:
+        name: fastfetch
+        state: present
+        update_cache: true
+
+    # Install Kitty terminal
+    - name: Install Kitty
+      pacman:
+        name: kitty
+        state: present
+        update_cache: true
+
+    # Install Miniconda
+    - name: Install Miniconda
+      shell: |
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+        bash ~/miniconda.sh -b -p $HOME/miniconda
+        rm ~/miniconda.sh
+      args:
+        creates: "{{ ansible_env.HOME }}/miniconda"
+
+    # Install Jupyter Notebook
+    - name: Install Jupyter Notebook
+      pacman:
+        name: python-jupyterlab
+        state: present
+        update_cache: true
+
+    # Install Go
+    - name: Install Go
+      pacman:
+        name: go
+        state: present
+        update_cache: true
+
+    # Install Rust using rustup
+    - name: Install Rust using rustup
+      shell: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      args:
+        creates: "{{ ansible_env.HOME }}/.cargo/bin/rustc"
+
