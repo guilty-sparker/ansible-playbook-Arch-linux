@@ -72,23 +72,3 @@
         state: present
         update_cache: true
 
-    - name: Install Kitty
-      pacman:
-        name: kitty
-        state: present
-        update_cache: true
-
-    - name: Install Miniconda
-      shell: |
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-        bash ~/miniconda.sh -b -p $HOME/miniconda
-        rm ~/miniconda.sh
-      args:
-        creates: "{{ ansible_env.HOME }}/miniconda"
-
-    - name: Add Miniconda to PATH in .zshrc
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/.zshrc"
-        line: 'export PATH="$HOME/miniconda/bin:$PATH"'
-        insertafter: EOF
-
