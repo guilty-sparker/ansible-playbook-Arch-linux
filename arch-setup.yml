@@ -17,6 +17,11 @@
       register: zsh_shell_changed
       when: ansible_env.SHELL != '/usr/bin/zsh'  # Check if the shell is already Zsh
 
+    - name: Check if .oh-my-zsh directory exists
+      stat:
+        path: "{{ ansible_env.HOME }}/.oh-my-zsh"
+      register: zsh_dir 
+      
     - name: Copy local Oh My Zsh setup
       copy:
         src: ./oh-my-zsh
@@ -24,8 +29,8 @@
         owner: "{{ ansible_user_id }}"
         group: "{{ ansible_user_id }}"
         mode: '0755'
-      when: not zsh_shell_changed.skipped and not ansible_env.HOME | regex_search('/.oh-my-zsh')
-
+      when: not zsh_shell_changed.skipped and not zsh_dir.exists
+      
     - name: Copy .zshrc to home directory
       copy:
         src: ./zshrc
@@ -69,6 +74,13 @@
     - name: Install Fastfetch
       pacman:
         name: fastfetch
+        state: present
+        update_cache: true
+
+    # New Task to Install tmux
+    - name: Install tmux
+      pacman:
+        name: tmux
         state: present
         update_cache: true
 
