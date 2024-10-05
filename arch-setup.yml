@@ -4,7 +4,6 @@
   become: true
   tasks:
 
-   
     - name: Install Zsh
       pacman:
         name: zsh
@@ -16,6 +15,7 @@
         name: "{{ ansible_user_id }}"
         shell: /usr/bin/zsh
       register: zsh_shell_changed
+      when: ansible_env.SHELL != '/usr/bin/zsh'  # Check if the shell is already Zsh
 
     - name: Copy local Oh My Zsh setup
       copy:
@@ -24,7 +24,7 @@
         owner: "{{ ansible_user_id }}"
         group: "{{ ansible_user_id }}"
         mode: '0755'
-      when: zsh_shell_changed is changed
+      when: not zsh_shell_changed.skipped and not ansible_env.HOME | regex_search('/.oh-my-zsh')
 
     - name: Copy .zshrc to home directory
       copy:
@@ -33,8 +33,8 @@
         owner: "{{ ansible_user_id }}"
         group: "{{ ansible_user_id }}"
         mode: '0644'
+      when: not ansible_env.HOME | regex_search('/.zshrc')
 
-   
     - name: Install Neovim
       pacman:
         name: neovim
@@ -48,13 +48,15 @@
         owner: "{{ ansible_user_id }}"
         group: "{{ ansible_user_id }}"
         mode: '0755'
+      when: not ansible_env.HOME | regex_search('/.config/nvim')
 
-    - name: Install NvChad dependencies
+    - name: Install NvChad dependencies (if Packer is installed)
       shell: nvim +PackerSync +qall
       args:
         chdir: "{{ ansible_env.HOME }}/.config/nvim"
+      when: 
+        - ansible_env.HOME | regex_search('/.local/share/nvim/site/pack/packer/start/packer.nvim')
 
-   
     - name: Copy Zsh autosuggestions from local directory
       copy:
         src: ./zsh-autosuggestions
@@ -62,6 +64,7 @@
         owner: "{{ ansible_user_id }}"
         group: "{{ ansible_user_id }}"
         mode: '0755'
+      when: not ansible_env.HOME | regex_search('/.oh-my-zsh/custom/plugins/zsh-autosuggestions')
 
     - name: Install Fastfetch
       pacman:
@@ -69,14 +72,12 @@
         state: present
         update_cache: true
 
-   
     - name: Install Kitty
       pacman:
         name: kitty
         state: present
         update_cache: true
 
-   
     - name: Install Miniconda
       shell: |
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
@@ -85,23 +86,9 @@
       args:
         creates: "{{ ansible_env.HOME }}/miniconda"
 
-   
-    - name: Install Jupyter Notebook
-      pacman:
-        name: python-jupyterlab
-        state: present
-        update_cache: true
-
-   
-    - name: Install Go
-      pacman:
-        name: go
-        state: present
-        update_cache: true
-
-    - name: Install Rust using rustup
-      shell: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      args:
-        creates: "{{ ansible_env.HOME }}/.cargo/bin/rustc"
+    - name: Add Miniconda to PATH in .zshrc
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        line: 'export PATH="$HOME/miniconda/bin:$PATH"'
+        insertafter: EOF
 
